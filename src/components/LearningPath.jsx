@@ -2,7 +2,7 @@ import React from 'react';
 import { roadmapData } from '../data/roadmap';
 import { ChevronRight, CheckCircle2, Lock } from 'lucide-react';
 
-export default function LearningPath({ activeTab, setActiveTab }) {
+export default function LearningPath({ activeTab, setActiveTab, completedTopics = [] }) {
   const currentStep = roadmapData.find(step => step.id === activeTab);
   const currentIndex = roadmapData.findIndex(step => step.id === activeTab);
 
@@ -13,19 +13,19 @@ export default function LearningPath({ activeTab, setActiveTab }) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[10px] font-bold text-github-text/40 uppercase tracking-[0.2em]">Learning Pathway</h3>
         <div className="text-[10px] font-bold text-github-accent uppercase tracking-widest bg-github-accent/10 px-2 py-0.5 rounded">
-          Level {currentStep.level} / {roadmapData.length}
+          {completedTopics.length} / {roadmapData.length} Mastery Progress
         </div>
       </div>
 
       <div className="relative h-1 bg-[#21262d] rounded-full mb-8 flex items-center justify-between">
         <div 
           className="absolute left-0 top-0 h-full bg-github-accent rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(88,166,255,0.3)]"
-          style={{ width: `${(currentIndex / (roadmapData.length - 1)) * 100}%` }}
+          style={{ width: `${(completedTopics.length / roadmapData.length) * 100}%` }}
         />
         
         {roadmapData.map((step, idx) => {
-          const isCompleted = idx < currentIndex;
-          const isActive = idx === currentIndex;
+          const isCompleted = completedTopics.includes(step.id);
+          const isActive = step.id === activeTab;
           const isLocked = idx > currentIndex;
 
           return (

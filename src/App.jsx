@@ -38,9 +38,31 @@ const missions = [
 ];
 
 function App() {
-  const [activeTab, setActiveTab] = useState('introduction');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('gitmastery_activetab') || 'introduction';
+  });
+  const [completedTopics, setCompletedTopics] = useState(() => {
+    const saved = localStorage.getItem('gitmastery_completed');
+    return saved ? JSON.parse(saved) : ['introduction'];
+  });
   const [activeMission, setActiveMission] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Sync state to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('gitmastery_activetab', activeTab);
+    localStorage.setItem('gitmastery_completed', JSON.stringify(completedTopics));
+  }, [activeTab, completedTopics]);
+
+  const handleCompleteTopic = (topicId, nextTopicId) => {
+    if (!completedTopics.includes(topicId)) {
+      setCompletedTopics(prev => [...prev, topicId]);
+    }
+    if (nextTopicId) {
+      setActiveTab(nextTopicId);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const filteredCommands = allCommands.filter(cmd => 
     cmd.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -256,15 +278,19 @@ function App() {
                   Keep the momentum going by moving to the next specialized topic in the Pro-Mastery Roadmap.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  {roadmapData[currentIndex + 1] && (
+                  {roadmapData[currentIndex + 1] ? (
                     <button 
-                      onClick={() => {
-                        setActiveTab(roadmapData[currentIndex + 1].id);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
+                      onClick={() => handleCompleteTopic(activeTab, roadmapData[currentIndex + 1].id)}
                       className="bg-github-success hover:bg-github-successHover text-white px-10 py-4 rounded-xl font-black transition-all transform hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(35,134,54,0.5)] flex items-center justify-center gap-3"
                     >
                       Complete & Next: {roadmapData[currentIndex + 1].label} <ChevronRight size={20} />
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => handleCompleteTopic(activeTab, null)}
+                      className="bg-github-success hover:bg-github-successHover text-white px-10 py-4 rounded-xl font-black transition-all flex items-center justify-center gap-3"
+                    >
+                      Mastery Achieved <CheckCircle2 size={20} />
                     </button>
                   )}
                   <button 
@@ -286,11 +312,15 @@ function App() {
     <div className="min-h-screen bg-github-bg text-[#c9d1d9] font-sans flex flex-col selection:bg-github-accent/30 selection:text-white">
       <Header />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} completedTopics={completedTopics} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         
         <main className="flex-1 overflow-y-auto w-full scrollbar-custom bg-[#0d1117]">
           <div className="max-w-5xl mx-auto p-6 md:p-12 lg:p-16">
-            <LearningPath activeTab={activeTab} setActiveTab={setActiveTab} />
+            <LearningPath 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab} 
+              completedTopics={completedTopics} 
+            />
             {renderContent()}
           </div>
         </main>

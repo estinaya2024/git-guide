@@ -1,6 +1,6 @@
 import { 
   Book, GitBranch, GitMerge, GitPullRequest, GitCommit, 
-  TerminalSquare, Settings, Users, Shield, Zap, Info, ChevronRight, Search
+  TerminalSquare, Settings, Users, Shield, Zap, Info, ChevronRight, Search, CheckCircle2
 } from 'lucide-react';
 
 const sections = [
@@ -40,7 +40,7 @@ const sections = [
   }
 ];
 
-export default function Sidebar({ activeTab, setActiveTab, searchTerm, setSearchTerm }) {
+export default function Sidebar({ activeTab, setActiveTab, completedTopics = [], searchTerm, setSearchTerm }) {
   return (
     <div className="w-64 bg-github-bg border-r border-github-border h-[calc(100vh-4rem)] flex-shrink-0 hidden md:block overflow-y-auto sticky top-16 scrollbar-custom">
       <div className="p-4 space-y-6">
@@ -69,6 +69,8 @@ export default function Sidebar({ activeTab, setActiveTab, searchTerm, setSearch
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
+                const isCompleted = completedTopics.includes(item.id);
+
                 return (
                   <button
                     key={item.id}
@@ -86,9 +88,12 @@ export default function Sidebar({ activeTab, setActiveTab, searchTerm, setSearch
                   >
                     <div className="flex items-center gap-2.5">
                       <Icon size={14} className={isActive ? 'text-[#58a6ff]' : (item.highlight ? 'text-github-success' : 'text-[#8b949e] group-hover:text-[#c9d1d9]')} />
-                      <span className="font-medium tracking-tight">{item.label}</span>
+                      <span className="font-medium tracking-tight whitespace-nowrap">{item.label}</span>
                     </div>
-                    {isActive && <ChevronRight size={12} className="text-[#58a6ff]" />}
+                    <div className="flex items-center gap-1.5">
+                      {isCompleted && !isActive && <CheckCircle2 size={10} className="text-github-success mt-0.5 opacity-80" />}
+                      {isActive && <ChevronRight size={10} className="text-[#58a6ff]" />}
+                    </div>
                   </button>
                 )
               })}
