@@ -10,6 +10,11 @@ export const contentData = {
       {
         heading: "What is GitHub?",
         text: "GitHub is a code hosting platform for version control and collaboration. It lets you and others work together on projects from anywhere. While Git is the tool that tracks changes, GitHub is the service that hosts the Git repositories."
+      },
+      {
+        heading: "Professional Commit Messages",
+        text: "Writing good commit messages is a critical professional skill. A well-structured commit message history allows teammates to understand the 'why' behind changes and enables automated changelog generation.",
+        code: `<type>(<scope>): <subject>\n\n<body>\n\n<footer>\n\n# Example:\nfeat(auth): add google oauth2 provider\n\nImplement the new Google Social Login flow to increase\nconversion rates on the signup page.\n\nCloses #123`
       }
     ]
   },
