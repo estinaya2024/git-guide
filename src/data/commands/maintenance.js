@@ -1,114 +1,51 @@
 export const maintenance = [
   {
     name: 'git gc',
-    role: 'Maintenance',
-    explanation: 'Runs garbage collection to optimize the local repository database.',
-    syntax: 'git gc --prune=now --aggressive',
-    scenario: 'Your repository is becoming slow and uses too much disk space after a long development cycle with many large binary file deletions.'
+    role: 'Optimization',
+    explanation: 'Runs "garbage collection" on the Git repository — compresses loose object files into efficient pack files, prunes unreachable objects (commits with no branch or tag pointing to them), and cleans up other housekeeping. Git accumulates loose objects as you work. Over time this makes operations slower. Running gc periodically keeps the repository fast and lean. Git runs a limited auto-gc automatically, but manual gc is more aggressive.',
+    syntax: 'git gc [--aggressive] [--prune=now]',
+    scenario: 'Your company\'s monorepo has been growing for 5 years with hundreds of contributors. Clone times are slow and operations feel sluggish. The DevOps team runs "git gc --aggressive" on the server-side bare repository. This compresses thousands of loose objects into efficiently indexed pack files. Clone speeds improve by 40%. This is standard maintenance for large, long-lived repositories.'
   },
   {
     name: 'git fsck',
-    role: 'Admin',
-    explanation: 'Checks the connectivity and validity of the objects in the Git database.',
-    syntax: 'git fsck --full --unreachable',
-    scenario: 'You want to ensure that none of your commits or blobs are corrupted or missing after a system crash or disk error.'
+    role: 'Integrity',
+    explanation: 'Runs a full integrity check on the Git object database — verifying that every stored object (blobs, trees, commits, tags) can be successfully read and that all references point to valid objects. It also finds "dangling" objects: commits or blobs that exist in the database but are not reachable from any branch or tag (often left over from hard resets, rebases, or branch deletions). Think of it as a filesystem health check for your repository.',
+    syntax: 'git fsck [--full] [--dangling]',
+    scenario: 'After a server crash or disk warning, your team is worried about repository corruption. Run "git fsck --full" on the bare repository. If it completes with no errors, your data integrity is verified. If it reports "broken link" or "missing blob", you have corruption and need to restore from backup immediately. This is the command that gives you a definitive "repo is healthy" or "repo needs repair" answer.'
   },
   {
-    name: 'git prune',
-    role: 'Cleanup',
-    explanation: 'Removes objects that are no longer reachable from any branch or tag.',
-    syntax: 'git prune -n --v',
-    scenario: 'You recently deleted several branches and want to clear out the now-dangling objects from your local database permanently.'
+    name: 'git tag',
+    role: 'Tagging',
+    explanation: 'Creates a permanent named pointer to a specific commit, most commonly used to mark release versions (v1.0.0, v2.3.1). There are two types: lightweight (just a pointer) and annotated (an object with a full message, tagger identity, and date — also GPG-signable). Always use annotated tags for releases. Unlike branches, tags do not move — they permanently mark a moment in history forever.',
+    syntax: 'git tag -a v1.0.0 -m "Release message" | git tag -l',
+    scenario: 'You are deploying version 3.0.0 of your application. Run "git tag -a v3.0.0 -m \'Release v3.0.0: complete UI rewrite and performance improvements\'". Then "git push origin v3.0.0". GitHub automatically creates a Release entry. Your CI/CD pipeline detects the new tag and triggers the deployment to production. Three years from now, anyone can run "git checkout v3.0.0" to see the exact code that was deployed that day.'
   },
   {
-    name: 'git repack',
-    role: 'Optimization',
-    explanation: 'Packs loose objects into more efficient pack files.',
-    syntax: 'git repack -a -d',
-    scenario: 'You want to manually trigger object packing for a repository that hasn\'t been optimized in a while to improve fetch speeds.'
-  },
-  {
-    name: 'git count-objects -v',
-    role: 'Inspection',
-    explanation: 'Shows detailed disk usage and object counts.',
-    syntax: 'git count-objects -vH',
-    scenario: 'You are analyzing your ".git" folder size to see what\'s taking up space and if it\'s time for a garbage collection.'
-  },
-  {
-    name: 'git reflog',
-    role: 'Safety Net',
-    explanation: 'Lists every action that updated the HEAD of your repository.',
-    syntax: 'git reflog [show] [branch]',
-    scenario: 'You just accidentally deleted a branch and need to find the commit hash to restore it before it\'s pruned by garbage collection.'
-  },
-  {
-    name: 'git reflog show',
-    role: 'Safety Net',
-    explanation: 'Shows the log for a specific branch or reference.',
-    syntax: 'git reflog show <branch>',
-    scenario: 'You want to see how your "main" branch pointer has moved over the last month to trace back a regression point.'
-  },
-  {
-    name: 'git stash drop stash@{0}',
-    role: 'Cleanup',
-    explanation: 'Deletes a specific stash from your local stack.',
-    syntax: 'git stash drop <id>',
-    scenario: 'You no longer need a temporary fix and want to stop it from appearing in your stash list to keep your workspace tidy.'
-  },
-  {
-    name: 'git update-index --refresh',
-    role: 'Admin',
-    explanation: 'Refreshes the index based on the working directory state.',
-    syntax: 'git update-index --refresh',
-    scenario: 'You are writing a script that needs to ensure the index is consistent with actual file changes before running a health check.'
-  },
-  {
-    name: 'git rerere',
-    role: 'Advanced Tool',
-    explanation: 'Reuse recorded resolution: allows Git to remember how you resolved merge conflicts for a file.',
-    syntax: 'git config --global rerere.enabled true',
-    scenario: 'You are rebasing a long-lived feature branch and don\'t want to resolve the same conflict in every rebased commit. Git will remember your fix.'
-  },
-  {
-    name: 'git rerere-forget',
-    role: 'Advanced Tool',
-    explanation: 'Forgets a previously recorded merge resolution.',
-    syntax: 'git rerere forget <path>',
-    scenario: 'You realized you resolved a conflict incorrectly and want Git to stop suggesting the wrong fix automatically.'
-  },
-  {
-    name: 'git update-server-info',
-    role: 'Admin (Legacy)',
-    explanation: 'Updates auxiliary info file to help dumb protocols (HTTP) discover repository data.',
-    syntax: 'git update-server-info',
-    scenario: 'You are hosting a Git repository over static HTTP (S3, etc.) and need it to be fetchable by clients using the legacy "dumb" protocol.'
-  },
-  {
-    name: 'git bundle',
-    role: 'Interoperability',
-    explanation: 'Packages objects and refs into a single file.',
-    syntax: 'git bundle create <file> <branch>',
-    scenario: 'You need to transfer a repository across a network gap (moving code between offline secure environments) via a physical USB-stick.'
-  },
-  {
-    name: 'git worktree add',
-    role: 'Architecture',
-    explanation: 'Allows checking out multiple branches to separate directories simultaneously.',
-    syntax: 'git worktree add <path> <branch>',
-    scenario: 'You are working on a massive feature but need to quickly switch to "main" to fix a high-priority bug without stashing or committing.'
+    name: 'git archive',
+    role: 'Export',
+    explanation: 'Creates a ZIP or TAR archive of the repository contents at a specific commit, branch, or tag — WITHOUT including the .git history directory. This is how you package and distribute your source code without exposing your entire commit history. Unlike downloading a GitHub ZIP, this works offline and lets you target any specific commit or branch.',
+    syntax: 'git archive --format=zip HEAD > release.zip',
+    scenario: 'A client needs the source code for their records but should not receive your entire 3-year commit history (which might contain sensitive API keys in old commits, internal discussions, or employee names). Run "git archive --format=zip v2.5.0 > client-delivery-v2.5.0.zip". They receive a clean zip of exactly the v2.5.0 release state with no history attached.'
   },
   {
     name: 'git worktree list',
-    role: 'Architecture',
-    explanation: 'Lists all current worktrees and their locations.',
+    role: 'Workspace Management',
+    explanation: 'Lists all currently active Git worktrees — the different working directories associated with this repository. The main worktree is always the first entry. Additional worktrees (created with "git worktree add") appear after it along with which branch each one has checked out. This command helps you track how many parallel workspaces you have open.',
     syntax: 'git worktree list',
-    scenario: 'You forgot where you checked out your second worktree and need to find its absolute path on your filesystem.'
+    scenario: 'You set up three worktrees last week to work on multiple things in parallel: main, feature/dark-mode, and hotfix/billing-bug. After finishing the hotfix, you want to know which worktrees are still active before cleaning up. "git worktree list" shows all three with their paths and branch names, helping you decide which to prune with "git worktree remove".'
   },
   {
-    name: 'git worktree prune',
-    role: 'Cleanup',
-    explanation: 'Cleans up working tree information for directories that have been deleted.',
-    syntax: 'git worktree prune',
-    scenario: 'You deleted a worktree directory manually and want to update the Git administrative info to reflect its removal.'
+    name: 'git maintenance start',
+    role: 'Optimization',
+    explanation: 'Registers the current repository with Git\'s built-in background maintenance scheduler. Git will automatically run optimization tasks (gc, commit-graph, prefetch) on a schedule in the background while you are working — without interrupting you. This is the "set it and forget it" approach to repository health, introduced in Git 2.29. These tasks keep large repos fast automatically.',
+    syntax: 'git maintenance start | git maintenance run --task=gc',
+    scenario: 'You work in a monorepo with 500,000 commits. Without maintenance, operations slowly degrade over months. Run "git maintenance start" once in the repo. Going forward, Git handles gc, commit-graph updates, and loose object packing automatically in the background every night. You never need to think about repo performance maintenance again — it just stays fast.'
+  },
+  {
+    name: 'git sparse-checkout',
+    role: 'Performance',
+    explanation: 'Enables you to check out only a specific subset of a repository\'s files instead of the whole thing. For massive monorepos where checking out all 50,000 files takes minutes, sparse checkout lets you specify which directories you actually need — checkout becomes instant and disk usage drops dramatically. This is used extensively at Google, Meta, and Microsoft for their giant internal monorepos.',
+    syntax: 'git sparse-checkout init --cone | git sparse-checkout set <path>',
+    scenario: 'Your company\'s monorepo contains 30 different microservices totaling 2GB of source code. You are only working on the "payments" service. Run "git sparse-checkout init --cone" then "git sparse-checkout set services/payments shared/utils". Git only materializes those two directories in your working tree. Checkout is near-instant, disk usage drops from 2GB to 50MB, and file operations are dramatically faster.'
   }
 ];
