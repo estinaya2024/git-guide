@@ -558,85 +558,178 @@ git rebase --continue`
   },
 
   orgs: {
-    title: "Organizations, Admin & CI/CD",
-    description: "Managing repositories at scale — for a company, open-source project, or team — requires policies, automation, and discipline. This is the engineering management layer of Git.",
+    title: "Working with GitHub Organizations",
+    description: "A GitHub Organization is a shared account that lets a company, team, or open-source project manage multiple repositories, members, and permissions under one unified home. This guide walks you through creating and running a professional organization from day one — exactly like the ones used by real companies.",
     sections: [
       {
-        heading: "GitHub Organizations — Managing Teams at Scale",
-        text: "A GitHub Organization is a shared account where businesses and teams can collaborate across many repositories simultaneously.\n\nOrganizations have a layered permission model:\n  — Owner: Full administrative control. Can delete the org, manage billing, etc. Limit this role — only 2-3 trusted people.\n  — Member: Standard org member. Permissions are defined per-team and per-repository.\n  — Outside Collaborator: Access to specific repos only (for contractors and freelancers).\n\nBest practice: Use TEAMS inside the Organization (e.g., 'Backend Team', 'Frontend Team', 'DevOps'). Grant repository access to teams, not individual users. When someone joins or leaves, update their team membership — not hundreds of individual repo permissions.",
-        code: `# After joining an organization, you can clone org repos via SSH:
-git clone git@github.com:YOUR-COMPANY/internal-api.git
+        heading: "Step 1 — Create Your Organization",
+        text: "An Organization is a shared workspace on GitHub that is separate from any personal account. Think of it like a company office building — individual personal accounts are employees who belong to the building, but the building itself owns the assets.\n\nTo create one:\n  1. Go to github.com → click your profile icon → 'Your Organizations'\n  2. Click 'New organization'\n  3. Choose a plan: Free (public repos + 3 seats for private), Team ($4/seat/month), or Enterprise\n  4. Pick an organization name — this becomes your URL (github.com/your-org-name). Choose wisely, this is your brand identifier.\n  5. Enter your billing email\n  6. Invite your first colleagues (or skip and do it later)\n\nAfter creation, you see exactly what the screenshot shows: an org overview page with tasks like 'Invite your people' and 'Collaborative coding'. The page shows People count, Repositories, Teams, and navigation tabs including Projects, Packages, and Insights.",
+        code: `# After creating the org, clone any org repo locally via SSH:
+git clone git@github.com:YOUR-ORG-NAME/repo-name.git
 
-# See all your organization repos (via GitHub CLI)
-gh repo list YOUR-COMPANY --limit 50
+# Or via HTTPS:
+git clone https://github.com/YOUR-ORG-NAME/repo-name.git
 
-# See your permission level on a repo (GitHub CLI)
-gh api repos/YOUR-COMPANY/repo-name | jq .permissions`
+# Using GitHub CLI — create a new repo directly inside the org:
+gh repo create YOUR-ORG-NAME/new-project --private --clone
+
+# List all repos in your org:
+gh repo list YOUR-ORG-NAME --limit 100`
       },
       {
-        heading: "Branch Protection Rules — Enforcing Code Quality",
-        text: "Branch Protection Rules are policies you configure in GitHub that prevent force-pushes, require code reviews before merging, and enforce passing test suites.\n\nThis is the most important administrative feature for any serious project.\n\nPro-level protection settings for 'main':\n  ✅ Require pull request reviews (1-2 required approvals)\n  ✅ Dismiss stale reviews when new commits are pushed\n  ✅ Require status checks to pass (CI/CD tests must pass)\n  ✅ Require branches to be up to date before merging\n  ✅ Restrict who can push directly to main\n  ✅ Do not allow force pushes\n  ✅ Do not allow deletions\n\nWith these rules, NO code — not even from the repository Owner — can enter 'main' without passing tests and code review. This is how professional teams maintain a stable main branch.",
+        heading: "Step 2 — Invite Your People",
+        text: "This is the 'Invite your people' section you see on the org homepage after creation. Every person who needs access to org repositories must be invited to the organization first.\n\nHow invitations work:\n  — Go to your Org → 'People' tab → 'Invite member'\n  — Enter the person's GitHub username OR email address\n  — Choose their role: Member or Owner\n  — They receive an email invitation and must accept it\n  — Until they accept, they show as 'Pending invitation'\n\nMember Roles explained:\n  OWNER: Full administrative control. Can delete repos, manage billing, add/remove members, change settings. Should be maximum 2–3 trusted founders or leads.\n  MEMBER: Regular contributor. Has no org-level admin power. Their actual access to specific repositories is controlled by Teams (see next step).\n\nOutside Collaborators: People not invited as org members, but granted direct access to specific repos. Perfect for contractors and freelancers who should only see one project.",
+        code: `# Add a member using GitHub CLI:
+gh api orgs/YOUR-ORG-NAME/invitations \
+  --method POST \
+  --field email="newdev@example.com" \
+  --field role="direct_member"
+
+# List all current members:
+gh api orgs/YOUR-ORG-NAME/members --jq '.[].login'
+
+# List pending invitations:
+gh api orgs/YOUR-ORG-NAME/invitations --jq '.[].email'
+
+# Remove a member who left the company:
+gh api orgs/YOUR-ORG-NAME/members/USERNAME --method DELETE`
       },
       {
-        heading: "GitHub Actions — Your Automated Quality Gate",
-        text: "GitHub Actions is a built-in CI/CD (Continuous Integration/Continuous Deployment) system. It automatically runs jobs in response to events like pull requests and pushes.\n\nCI (Continuous Integration) means every PR automatically runs your test suite, linter, and build — catching bugs before they reach main.\n\nCD (Continuous Deployment) means every merge to main automatically deploys to your server — so trusted changes go live without manual work.\n\nA workflow is a YAML file in .github/workflows/. When you push code, GitHub reads this file and runs the defined jobs on its servers.",
-        code: `# .github/workflows/ci.yml
-# This file runs your tests on every Pull Request
+        heading: "Step 3 — Create Teams & Set Base Permissions",
+        text: "The second task on the org homepage ('Customize members' permissions') is critical. NEVER grant permissions to individuals directly — always use Teams. Here is why:\n\nTeams are named groups inside the org (e.g., 'backend-team', 'frontend-team', 'devops', 'interns'). You give a team access to repositories at a specific permission level. When a developer joins the backend team, they automatically get access to every backend repository — no per-repo setup needed. When they leave, remove them from the team and all access is revoked instantly across all repositories.\n\nPermission levels (from least to most powerful):\n  READ: View and clone. Perfect for stakeholders, PMs, designers.\n  TRIAGE: Read + manage issues and PRs. For support or QA teams.\n  WRITE: Push branches, create PRs, merge approved PRs. Standard for developers.\n  MAINTAIN: Write + manage repo settings. For tech leads.\n  ADMIN: Full control including delete repo, manage secrets. Use sparingly.\n\nBase Permissions: Set this in Org Settings → Member Privileges. Options are 'None', 'Read', 'Write'. This is the floor — every member gets at minimum this level on ALL org repos.",
+        code: `# Create a new team in the org (GitHub CLI):
+gh api orgs/YOUR-ORG-NAME/teams \
+  --method POST \
+  --field name="backend-team" \
+  --field description="Backend engineers" \
+  --field privacy="closed"
 
+# Add a member to the team:
+gh api orgs/YOUR-ORG-NAME/teams/backend-team/memberships/USERNAME \
+  --method PUT \
+  --field role="member"
+
+# Give a team WRITE access to a specific repository:
+gh api orgs/YOUR-ORG-NAME/teams/backend-team/repos/YOUR-ORG-NAME/api-server \
+  --method PUT \
+  --field permission="push"
+
+# List all teams:
+gh api orgs/YOUR-ORG-NAME/teams --jq '.[].name'`
+      },
+      {
+        heading: "Step 4 — Create & Manage Repositories",
+        text: "In an organization, repositories are owned by the ORG, not by individual accounts. This means they stay with the company even when developers come and go — crucial for business continuity.\n\nRepository visibility:\n  PUBLIC: Anyone can see the code. Used for open source projects.\n  PRIVATE: Only org members with explicit access can see it.\n  INTERNAL (Enterprise only): Visible to all org members, not the public.\n\nOrg repo best practices:\n  — Use a consistent naming convention: api-service, web-frontend, mobile-app, docs\n  — Always add a README.md and LICENSE on creation\n  — Set up branch protection on 'main' from day one (see next step)\n  — Add a CODEOWNERS file to automatically assign reviewers based on which files changed\n  — Pin important repos to the org profile so they appear first on github.com/YOUR-ORG",
+        code: `# Create a new private org repo (GitHub CLI):
+gh repo create YOUR-ORG-NAME/api-service \\
+  --private \\
+  --description "Node.js REST API for the platform" \\
+  --add-readme \\
+  --license MIT
+
+# Clone it immediately:
+gh repo clone YOUR-ORG-NAME/api-service
+
+# Transfer an existing personal repo to the org:
+gh api repos/YOUR-USERNAME/old-repo/transfer \\
+  --method POST \\
+  --field new_owner="YOUR-ORG-NAME"
+
+# CODEOWNERS file (place at repo root or .github/):
+# Automatically request reviews from specific teams
+# .github/CODEOWNERS
+# * @YOUR-ORG-NAME/backend-team        <- All files: backend team reviews
+# *.css @YOUR-ORG-NAME/frontend-team   <- CSS files: frontend team reviews
+# docs/ @YOUR-ORG-NAME/tech-writers    <- Docs: writing team reviews`
+      },
+      {
+        heading: "Step 5 — Branch Protection: Lock Down Main",
+        text: "Branch Protection Rules are the most important safety policy in any organization. They ensure that no code — not even from an Owner — can land in 'main' without proper review and passing tests.\n\nHow to set up (GitHub UI):\n  1. Go to the repository → Settings → Branches\n  2. Click 'Add branch protection rule'\n  3. Branch name pattern: main\n  4. Enable these settings:\n\nRequired settings for every professional org:\n  ✅ Require a pull request before merging\n  ✅ Required approvals: 1 (for small teams) or 2 (for large teams)\n  ✅ Dismiss stale reviews — if new commits are pushed, old approvals are invalidated\n  ✅ Require review from Code Owners — the CODEOWNERS file determines who must review\n  ✅ Require status checks to pass — CI tests must be green before merge\n  ✅ Require branches to be up to date — feature branch must be rebased onto latest main\n  ✅ Do not allow bypassing the above settings — even admins must follow the rules\n  ✅ Restrict who can push to matching branches — only specific teams\n  ✅ Do not allow force pushes\n  ✅ Do not allow deletions\n\nResult: 'main' becomes a fortress. Every commit that lands there is reviewed, tested, and approved. This is the standard at Netflix, Stripe, Google, and every serious engineering organization.",
+        code: `# Set branch protection via GitHub CLI (requires admin):
+gh api repos/YOUR-ORG-NAME/REPO/branches/main/protection \\
+  --method PUT \\
+  --field required_status_checks='{"strict":true,"contexts":["CI / test"]}' \\
+  --field enforce_admins=true \\
+  --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \\
+  --field restrictions=null
+
+# Check the current protection rules:
+gh api repos/YOUR-ORG-NAME/REPO/branches/main/protection
+
+# As a developer — the correct PR workflow in a protected org:
+git switch main && git pull             # Start from latest main
+git switch -c feat/new-api-endpoint    # Create a feature branch
+# ... write code, make commits ...
+git push -u origin feat/new-api-endpoint
+gh pr create --title "feat: add user search endpoint" --body "Closes #42"
+# Wait for CI to pass and reviewer approval — THEN merge`
+      },
+      {
+        heading: "Step 6 — GitHub Actions CI/CD for the Whole Team",
+        text: "In an organization, GitHub Actions workflows are shared across repositories. You can define reusable workflows in one repository and call them from others — so your entire org shares the same tested CI/CD pipeline without duplicating code.\n\nOrg Secrets: Sensitive values (API keys, deployment tokens) can be stored at the ORGANIZATION level and made available to all (or selected) repos. No developer ever sees the secret value — GitHub injects it automatically into the workflow runner.\n\nEnvironments: Define deployment environments (staging, production) with required reviewers. A deployment to 'production' can require manual approval from a senior engineer before it proceeds — a critical safety gate.\n\nOrg-level workflow patterns:\n  — Shared reusable workflow repo: .github/workflows/ci-template.yml\n  — All repos call it with: uses: YOUR-ORG-NAME/.github/.github/workflows/ci-template.yml\n  — Update the template once → all repos benefit automatically",
+        code: `# .github/workflows/ci.yml (in each repo)
 name: CI Pipeline
 
 on:
-  pull_request:          # Trigger on every PR
+  pull_request:
     branches: [main]
   push:
-    branches: [main]     # Also trigger on pushes to main
+    branches: [main]
 
 jobs:
   test:
-    runs-on: ubuntu-latest    # Run on a clean Ubuntu VM
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run linter
-        run: npm run lint
-
-      - name: Run tests
-        run: npm test
-
-      - name: Build production bundle
-        run: npm run build`
+  # Deployment job — only runs on merge to main
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production   # Requires manual approval if configured
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to production
+        env:
+          DEPLOY_TOKEN: \${{ secrets.PROD_DEPLOY_TOKEN }}  # Org-level secret
+        run: ./scripts/deploy.sh`
       },
       {
-        heading: "Semantic Versioning & Tags — The Release System",
-        text: "When your code is ready to release publicly, you create a Git Tag — a permanent, named pointer to a specific commit. Tags are used by package registries, Docker images, and deployment systems to reference stable versions.\n\nProfessional projects use Semantic Versioning: MAJOR.MINOR.PATCH\n\n  PATCH (1.0.1): Bug fix, backwards-compatible\n  MINOR (1.1.0): New feature, backwards-compatible\n  MAJOR (2.0.0): Breaking change — existing integrations may break\n\nThe CHANGELOG.md file, generated from your Conventional Commit messages, documents what changed in each version.",
-        code: `# List all tags in the project
-git tag
+        heading: "Step 7 — Keeping the Org Healthy Long-Term",
+        text: "A GitHub Organization needs ongoing maintenance, just like a codebase. Here are the ongoing practices that keep a healthy engineering organization:\n\nMonthly tasks:\n  — Audit 'People' tab: Are all members still with the company? Offboard leavers immediately — their access should be revoked the moment they leave.\n  — Check 'Pending invitations': Unsent invites expire after 7 days. Resend or cancel stale ones.\n  — Review 'Outside Collaborators': Do contractors still need access? Remove expired contracts.\n\nQuarterly tasks:\n  — Audit team memberships: Are developers on the right teams for their current role?\n  — Review repository access: Check who has admin access to production repos.\n  — Rotate org-level secrets: Refresh API keys and deployment tokens.\n  — Archive inactive repos: Old repos should be archived (read-only), not deleted — history is valuable.\n\nInsights tab (shown in the screenshot):\n  — Shows org-wide contribution graphs, active repos, and code frequency\n  — Use this to identify which repos are most active and allocate review capacity accordingly",
+        code: `# Daily developer workflow inside an org:
 
-# Create an annotated tag (use this for releases — it has metadata)
-git tag -a v1.4.0 -m "Release v1.4.0: Payment gateway integration"
+# 1. Clone an org repo
+git clone git@github.com:YOUR-ORG-NAME/api-service.git
 
-# Tag a specific past commit (not just the current HEAD)
-git tag -a v1.3.1 abc1234 -m "Hotfix: correct invoice calculation"
+# 2. Your identity should match your work email
+git config --local user.email "you@company.com"
 
-# Push tags to GitHub (tags are NOT pushed by 'git push' alone)
-git push origin v1.4.0
+# 3. Always branch from the latest main
+git switch main && git pull
+git switch -c feat/YOUR-FEATURE
 
-# Push ALL local tags at once
-git push origin --tags
+# 4. Commit with team conventions
+git commit -m "feat(users): add search by email endpoint"
 
-# Create a GitHub Release from a tag (using GitHub CLI)
-gh release create v1.4.0 --title "Version 1.4.0" --notes "See CHANGELOG.md"`
+# 5. Push and open a PR
+git push -u origin feat/YOUR-FEATURE
+gh pr create --assignee "@me" --label "feature"
+
+# 6. After merge, clean up
+git switch main && git pull
+git branch -d feat/YOUR-FEATURE
+
+# Verify your access level on any org repo:
+gh api repos/YOUR-ORG-NAME/api-service --jq '.permissions'`
       }
     ]
   }
