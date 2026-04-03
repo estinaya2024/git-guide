@@ -4,9 +4,11 @@ import Sidebar from './components/Sidebar';
 import CodeBlock from './components/CodeBlock';
 import { contentData } from './data/content';
 import { allCommands } from './data/commands';
-import { Book, TerminalSquare, ChevronRight, CheckCircle2, Star, Users, Shield, Target, Search, Zap } from 'lucide-react';
+import { roadmapData } from './data/roadmap';
+import { Book, TerminalSquare, ChevronRight, CheckCircle2, Star, Users, Shield, Target, Search, Zap, Activity } from 'lucide-react';
 
 import InteractiveTerminal from './components/InteractiveTerminal';
+import LearningPath from './components/LearningPath';
 
 const missions = [
   { 
@@ -256,6 +258,7 @@ function App() {
         
         <main className="flex-1 overflow-y-auto w-full scrollbar-custom bg-[#0d1117]">
           <div className="max-w-5xl mx-auto p-6 md:p-12 lg:p-16">
+            <LearningPath activeTab={activeTab} setActiveTab={setActiveTab} />
             {renderContent()}
           </div>
         </main>
@@ -269,13 +272,15 @@ function App() {
              <span>Git v2.43.0 Connected</span>
            </div>
            <div className="flex items-center gap-1.5 border-l border-github-border pl-4">
-             <Book size={10} />
-             <span className="uppercase tracking-widest">{activeTab}</span>
+             <Activity size={10} className="text-github-accent" />
+             <span className="uppercase tracking-widest text-github-accent font-bold">
+               LEVEL {roadmapData.find(s => s.id === activeTab)?.level || '?'}: {activeTab}
+             </span>
            </div>
         </div>
         <div className="flex items-center gap-4">
            <span>UTF-8</span>
-           <span className="text-github-accent font-bold">MASTERED BY ANTIGRAVITY</span>
+           <span className="text-github-accent font-bold">PRO-MASTERY SYSTEM v3.0</span>
         </div>
       </footer>
     </div>
