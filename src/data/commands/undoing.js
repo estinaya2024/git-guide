@@ -1,114 +1,65 @@
 export const undoing = [
   {
-    name: 'git checkout --',
-    role: 'Restoration',
-    explanation: 'Discards local changes to a specific file in the working directory.',
-    syntax: 'git checkout -- <file>',
-    scenario: 'You edited "index.html" but messed up and want to revert to the version as it was in your last commit. Note: Prefer "git restore" in modern Git.'
-  },
-  {
     name: 'git restore',
     role: 'Restoration',
-    explanation: 'The modern alternative to checkout -- for undoing changes in files.',
+    explanation: 'The modern command for safely discarding changes in either the Working Directory or the Staging Area. "git restore <file>" throws away uncommitted edits to a file, restoring it to match the last commit. "git restore --staged <file>" unstages a file (moves it back to the Working Directory) without deleting the changes. This command replaced the confusing overloaded behavior of "git checkout -- <file>".',
     syntax: 'git restore <file> | git restore --staged <file>',
-    scenario: 'You accidentally staged a configuration file and want to unstage it using "git restore --staged <file>" without losing your edits.'
-  },
-  {
-    name: 'git reset HEAD',
-    role: 'Restoration',
-    explanation: 'Unstages a file but keeps the changes in your working directory.',
-    syntax: 'git reset HEAD <file>',
-    scenario: 'You accidentally ran "git add package-lock.json" and want to unstage it before committing to keep your PR clean.'
+    scenario: 'You accidentally deleted 200 lines from "App.jsx" and haven\'t committed yet. Run "git restore App.jsx" and it instantly snaps back to its last committed state — as if you never touched it. Alternatively, you staged a password file by mistake: "git restore --staged .env" removes it from staging but keeps the file on disk so you don\'t lose your local configuration.'
   },
   {
     name: 'git reset --soft',
-    role: 'Restoration',
-    explanation: 'Undoes the last commit(s) but leaves your changes in the staging area.',
-    syntax: 'git reset --soft HEAD~1',
-    scenario: 'You committed your work but realized you forgot to add a small comment or a file; you want to "un-commit" so you can fix it and commit again.'
+    role: 'Reset',
+    explanation: 'Moves the branch pointer back to a previous commit, but leaves all the changes from the removed commit(s) safely staged in the Staging Area. Think of it as "uncommitting" — the snapshot is erased from history, but all the work is preserved and ready to be re-committed differently. This is the safest reset option because no work is lost.',
+    syntax: 'git reset --soft HEAD~<number>',
+    scenario: 'You accidentally committed to the wrong branch. The commit is good code, you just need to move it. Run "git reset --soft HEAD~1" — the commit disappears from history, but all the changes are still staged. Now switch to the correct branch and run "git commit" — the same work appears in the right place. No code lost, just relocated.'
+  },
+  {
+    name: 'git reset --mixed',
+    role: 'Reset',
+    explanation: 'The DEFAULT reset behavior when you don\'t specify a mode. Moves the branch pointer back AND unstages the changes from the removed commit, but keeps the modified files in your Working Directory. The work is still there — you just need to re-examine and re-stage it more carefully. This is useful when you want to recommit with different/more selective staging.',
+    syntax: 'git reset HEAD~<number>',
+    scenario: 'You made one big commit with 10 file changes that should have been 3 separate, logical commits. Run "git reset HEAD~1" (mixed). Now all 10 files are modified but unstaged. You can carefully re-stage and re-commit them in three logical groups: "feat: add user model", "feat: add user API routes", "feat: add user frontend form". Clean history, same work.'
   },
   {
     name: 'git reset --hard',
-    role: 'Restoration',
-    explanation: 'Undoes everything since the specified commit, including your working directory changes.',
-    syntax: 'git reset --hard <commit-hash>',
-    scenario: 'You completely messed up your last hour of work and want to delete all local changes and go back to a clean, known-good state.'
+    role: 'Reset',
+    explanation: 'The nuclear option. Moves the branch pointer back AND permanently destroys the working files to match the target commit. ALL changes since that commit — staged, unstaged, everything — are gone. There is no Recycle Bin. However, if you committed before running this, the reflog holds a record for 90 days, giving you a potential recovery window.',
+    syntax: 'git reset --hard HEAD~<number> | git reset --hard <commit-hash>',
+    scenario: 'You spent an hour going down a completely wrong architectural path. Nothing is worth keeping. Run "git reset --hard HEAD~5" to erase the last 5 commits and all their code completely. The project snaps back to the last good state instantly. Emergency use only — always double-check you have no unsaved valuable work before running this.'
   },
   {
     name: 'git revert',
+    role: 'Safe Undo',
+    explanation: 'Creates a brand NEW commit that reverses the effects of a previous commit. Unlike reset, it does NOT rewrite history — the original "bad" commit remains, and a new "undo" commit is added on top. This makes it completely safe to use on shared branches because other teammates\' copies are not broken. The history truthfully records: "this happened, then it was undone."',
+    syntax: 'git revert <commit-hash> | git revert HEAD',
+    scenario: 'A bug was introduced in commit "abc1234" that made it to the main branch and was pushed. Three teammates have already pulled this commit. You cannot use "git reset" — that would break their copies. Instead, run "git revert abc1234". Git creates a new commit that undoes exactly those changes. Everyone on the team runs "git pull" and gets the fix automatically. Professional, safe, and traceable.'
+  },
+  {
+    name: 'git commit --amend',
+    role: 'History Editing',
+    explanation: 'Modifies the MOST RECENT commit — either its message, its staged changes, or both. It replaces the last commit entirely with a new one (technically it creates a new commit and discards the old). This looks seamless in the log. Critical rule: only amend commits that have NOT yet been pushed to a shared remote. Amending a pushed commit rewrites history and will break your teammates\' repos.',
+    syntax: 'git commit --amend -m "new message" | git commit --amend --no-edit',
+    scenario: 'You just committed and immediately noticed a typo in the message: "feat(auth): ad login" instead of "feat(auth): add login". Run "git commit --amend -m \'feat(auth): add login\'" — the typo commit is replaced instantly. No trace of the mistake remains. Or add a missed file: "git add forgotten-file.js && git commit --amend --no-edit" to fold it into the last commit without changing the message.'
+  },
+  {
+    name: 'git reflog',
     role: 'Recovery',
-    explanation: 'Creates a *new* commit that undoes the changes from a previous commit.',
-    syntax: 'git revert <commit-hash>',
-    scenario: 'You pushed a bug to the server yesterday and need to safely undo it without changing the project history (required for shared branches).'
-  },
-  {
-    name: 'git clean -f',
-    role: 'Cleanup',
-    explanation: 'Forcefully removes untracked files from the working tree.',
-    syntax: 'git clean -f',
-    scenario: 'You have a project full of build logs and temporary files that you want to delete instantly to clean your workspace.'
-  },
-  {
-    name: 'git clean -fd',
-    role: 'Cleanup',
-    explanation: 'Removes both untracked files and directories.',
-    syntax: 'git clean -fd',
-    scenario: 'You want to delete all generated folders (like "dist/" or "out/") that are not tracked by Git in one command.'
-  },
-  {
-    name: 'git stash save',
-    role: 'Work Management',
-    explanation: 'Saves your uncommitted changes to a stack with a descriptive message.',
-    syntax: 'git stash push -m "description"',
-    scenario: 'You are half-way through a feature but need to switch to an emergency hotfix branch immediately without committing messy code.'
-  },
-  {
-    name: 'git stash list',
-    role: 'Work Management',
-    explanation: 'Shows all stashed work items.',
-    syntax: 'git stash list',
-    scenario: 'You have multiple stashes and need to find the one named "WIP login fix" to resume your earlier work.'
-  },
-  {
-    name: 'git stash apply',
-    role: 'Work Management',
-    explanation: 'Applies stashed changes back to your working directory but keeps it in the stash stack.',
-    syntax: 'git stash apply [stash@{n}]',
-    scenario: 'You want to apply a fix from your stash to multiple experimental branches without removing it from the stack yet.'
-  },
-  {
-    name: 'git stash pop',
-    role: 'Work Management',
-    explanation: 'Applies stashed changes and removes the item from the stack.',
-    syntax: 'git stash pop',
-    scenario: 'You finished the hotfix, switched back to your feature, and want your half-finished work back exactly where you left off.'
-  },
-  {
-    name: 'git stash show -p',
-    role: 'Work Management',
-    explanation: 'Shows the actual diff of what is inside a specific stash.',
-    syntax: 'git stash show -p [stash@{n}]',
-    scenario: 'You forgot exactly what code you put into stash@{0} and want to see the diff before deciding to apply it.'
+    explanation: 'Git\'s "black box flight recorder". Every single time HEAD moves — every commit, checkout, reset, merge, rebase — the reflog records it. This includes commits that are no longer reachable from any branch (e.g., after a hard reset). Entries are kept for 90 days. The reflog is local only — it lives in your .git folder and is NOT shared with the remote. It is your absolute last line of defense against catastrophic data loss.',
+    syntax: 'git reflog [show] [--all]',
+    scenario: 'You ran "git reset --hard HEAD~3" thinking you were removing 3 trivial commits — but one of them had 4 hours of important work in it. Panic. Run "git reflog". You see "HEAD@{2}: commit: feat: the important work". Copy that hash and run "git checkout -b recovery-branch abc1234". Your lost work is fully restored in a new branch. The reflog just saved your job.'
   },
   {
     name: 'git stash drop',
     role: 'Cleanup',
-    explanation: 'Removes a specific stash from the stack.',
+    explanation: 'Permanently deletes a specific stash entry from the stash stack without applying it. Stashes accumulate over time and become confusing if not cleaned up. Unlike "git stash pop" which applies-then-deletes, "drop" just deletes. Use "git stash list" first to see all stashes and their index numbers.',
     syntax: 'git stash drop [stash@{n}]',
-    scenario: 'You have an old stash that is no longer needed because the feature was abandoned, and you want to clean up your stack.'
+    scenario: 'You ran "git stash list" and found 7 old stashes from 3 months ago labelled "WIP: old idea" that you never ended up using. Run "git stash drop stash@{3}" to clean up the obsolete ones. A clean stash list means when you do need to recover something, you can quickly find it without scrolling through irrelevant old experiments.'
   },
   {
-    name: 'git stash clear',
+    name: 'git clean',
     role: 'Cleanup',
-    explanation: 'Deletes all items in your stash stack.',
-    syntax: 'git stash clear',
-    scenario: 'You haven\'t cleaned your stash in months and have 50 stale items; you want to wipe the slate clean.'
-  },
-  {
-    name: 'git reflog expire',
-    role: 'Admin',
-    explanation: 'Prunes old reflog entries.',
-    syntax: 'git reflog expire --all',
-    scenario: 'You want to clear your local safety net history to save disk space after a major cleanup operation.'
+    explanation: 'Removes untracked files and directories from the Working Directory. These are files that Git is not tracking at all (never been added). This is useful when a build process creates generated files, or when you want to get back to a pristine state. Always run with "-n" (dry run) first to preview what would be deleted — git clean destroys files permanently with no undo.',
+    syntax: 'git clean -n | git clean -fd',
+    scenario: 'Your build tool generated hundreds of compiled files (.o, .pyc, dist/) that aren\'t in .gitignore and are cluttering your directory. Run "git clean -n" first to see exactly what would be deleted (dry run, no changes made). Satisfied? Run "git clean -fd" to actually delete all untracked files and directories. Your working directory is now completely pristine.'
   }
 ];
