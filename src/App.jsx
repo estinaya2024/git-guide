@@ -238,25 +238,43 @@ function App() {
           ))}
         </article>
 
-        {activeTab !== 'practice' && (
-          <div className="relative group overflow-hidden mt-16 p-8 rounded-xl bg-gradient-to-br from-[#161b22] to-github-bg border border-github-border shadow-2xl">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-               <TerminalSquare size={120} className="text-github-success" />
-            </div>
-            <div className="relative z-10 w-full md:w-2/3">
-              <h3 className="text-2xl font-bold text-white mb-3 flex items-center gap-3">
-                <CheckCircle2 size={24} className="text-github-success" />
-                Done with the theory?
-              </h3>
-              <p className="text-github-text mb-8 text-lg">
-                The best way to master Git is by typing the commands. Launch the sandbox to test your skills on real-world scenarios.
-              </p>
-              <button 
-                onClick={() => setActiveTab('practice')}
-                className="bg-github-success hover:bg-github-successHover text-white px-8 py-3 rounded-md font-bold transition-all transform hover:-translate-y-1 hover:shadow-lg flex items-center gap-2"
-              >
-                Launch Sandbox Mode <ChevronRight size={18} />
-              </button>
+        {(activeTab !== 'practice' && activeTab !== 'commands') && (
+          <div className="mt-20 space-y-6">
+            <div className="relative group overflow-hidden p-10 rounded-2xl bg-gradient-to-br from-[#23863622] to-github-bg border border-github-success/30 shadow-2xl transition-all hover:border-github-success/50">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                 <CheckCircle2 size={160} className="text-github-success" />
+              </div>
+              <div className="relative z-10">
+                <div className="text-[10px] font-bold text-github-success uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                  <Activity size={14} /> Topic Mastery Achieved
+                </div>
+                <h3 className="text-3xl font-extrabold text-white mb-4 tracking-tight">
+                  Ready for the Next Level?
+                </h3>
+                <p className="text-github-text mb-10 text-lg max-w-2xl leading-relaxed">
+                  You've covered the core concepts of <span className="text-white font-bold">{contentData[activeTab]?.title}</span>. 
+                  Keep the momentum going by moving to the next specialized topic in the Pro-Mastery Roadmap.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {roadmapData[currentIndex + 1] && (
+                    <button 
+                      onClick={() => {
+                        setActiveTab(roadmapData[currentIndex + 1].id);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="bg-github-success hover:bg-github-successHover text-white px-10 py-4 rounded-xl font-black transition-all transform hover:-translate-y-1 hover:shadow-[0_10px_20px_-10px_rgba(35,134,54,0.5)] flex items-center justify-center gap-3"
+                    >
+                      Complete & Next: {roadmapData[currentIndex + 1].label} <ChevronRight size={20} />
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => setActiveTab('practice')}
+                    className="bg-[#21262d] hover:bg-[#30363d] text-white px-10 py-4 rounded-xl font-bold border border-github-border transition-all flex items-center justify-center gap-2"
+                  >
+                    Go to Sandbox <TerminalSquare size={18} />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
