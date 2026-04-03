@@ -224,6 +224,8 @@ function App() {
     const data = contentData[activeTab];
     if (!data) return <div className="text-github-text">Topic content not available.</div>;
 
+    const currentIndex = roadmapData.findIndex(step => step.id === activeTab);
+
     return (
       <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500 pb-20">
         <header className="border-b border-github-border pb-8">
