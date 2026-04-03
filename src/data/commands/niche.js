@@ -27,7 +27,7 @@ export const niche = [
     name: 'git verify-commit',
     role: 'Security',
     explanation: 'Verifies the GPG signature of a commit.',
-    scenario: 'Your organization requires all commits to be signed; you want to check a teammate''s signature.'
+    scenario: 'Your organization requires all commits to be signed; you want to check a teammate\'s signature.'
   },
   {
     name: 'git interpret-trailers',
@@ -50,7 +50,7 @@ export const niche = [
   {
     name: 'git replace --edit',
     role: 'Advanced Maintenance',
-    explanation: 'Allows you to edit an object''s content manually.',
+    explanation: 'Allows you to edit an object\'s content manually.',
     scenario: 'You have a corrupted commit object and want to manually attempt a fix by editing its text.'
   },
   {

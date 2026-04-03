@@ -21,13 +21,13 @@ export const maintenance = [
     name: 'git repack',
     role: 'Optimization',
     explanation: 'Packs loose objects into more efficient pack files.',
-    scenario: 'You want to manually trigger object packing for a repository that hasn''t been optimized in a while.'
+    scenario: 'You want to manually trigger object packing for a repository that hasn\'t been optimized in a while.'
   },
   {
     name: 'git count-objects -v',
     role: 'Inspection',
     explanation: 'Shows detailed disk usage and object counts.',
-    scenario: 'You are analyzing your ".git" folder size to see what''s taking up space.'
+    scenario: 'You are analyzing your ".git" folder size to see what\'s taking up space.'
   },
   {
     name: 'git reflog',
@@ -57,7 +57,7 @@ export const maintenance = [
     name: 'git rerere',
     role: 'Advanced Tool',
     explanation: 'Reuse recorded resolution: allows Git to remember how you resolved merge conflicts for a file.',
-    scenario: 'You are rebasing a long-lived feature branch and don''t want to resolve the same conflict in every rebased commit.'
+    scenario: 'You are rebasing a long-lived feature branch and don\'t want to resolve the same conflict in every rebased commit.'
   },
   {
     name: 'git rerere-forget',

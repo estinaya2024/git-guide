@@ -3,7 +3,8 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import CodeBlock from './components/CodeBlock';
 import { contentData } from './data/content';
-import { Book, TerminalSquare, ChevronRight, CheckCircle2, Star, Users, Shield, Target } from 'lucide-react';
+import { allCommands } from './data/commands';
+import { Book, TerminalSquare, ChevronRight, CheckCircle2, Star, Users, Shield, Target, Search, Zap } from 'lucide-react';
 
 import InteractiveTerminal from './components/InteractiveTerminal';
 
@@ -37,8 +38,70 @@ const missions = [
 function App() {
   const [activeTab, setActiveTab] = useState('introduction');
   const [activeMission, setActiveMission] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredCommands = allCommands.filter(cmd => 
+    cmd.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    cmd.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    cmd.explanation.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const renderContent = () => {
+    if (activeTab === 'commands') {
+      return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 pb-20">
+          <header className="border-b border-github-border pb-8">
+            <div className="flex items-center gap-2 text-github-text/60 text-xs font-medium mb-3">
+              <Book size={14} />
+              <span>Reference</span>
+              <ChevronRight size={12} className="opacity-50" />
+              <span className="text-github-accent font-bold uppercase tracking-widest text-[10px]">160+ Commands</span>
+            </div>
+            <h1 className="text-4xl font-extrabold text-white mb-4 tracking-tight">Git Command Encyclopedia</h1>
+            <p className="text-lg text-[#8b949e] max-w-3xl leading-relaxed">
+              Explore the complete set of Git commands, from everyday porcelains to deep-level plumbing. 
+              {searchTerm && <span className="text-github-accent ml-2">Found {filteredCommands.length} matches for "{searchTerm}"</span>}
+            </p>
+          </header>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {filteredCommands.map((cmd, i) => (
+              <div key={i} className="bg-github-canvas border border-github-border rounded-lg p-5 hover:border-github-accent/50 transition-all group shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <code className="text-github-accent font-mono font-bold text-sm bg-github-accent/10 px-2 py-1 rounded">
+                    {cmd.name}
+                  </code>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#21262d] text-github-text/60 border border-github-border uppercase tracking-tight">
+                    {cmd.role}
+                  </span>
+                </div>
+                <p className="text-sm text-[#e6edf3] mb-4 leading-relaxed font-medium">
+                  {cmd.explanation}
+                </p>
+                <div className="bg-[#0d1117] border border-github-border/50 rounded-md p-3 relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-github-accent/30" />
+                  <div className="text-[10px] font-bold text-github-text/40 uppercase mb-1 flex items-center gap-1.5 leading-none">
+                    <Zap size={10} className="text-github-accent" /> Real-World Scenario
+                  </div>
+                  <p className="text-[12px] text-github-text leading-snug italic">
+                    "{cmd.scenario}"
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredCommands.length === 0 && (
+            <div className="text-center py-20 border-2 border-dashed border-github-border rounded-xl">
+              <Search size={48} className="mx-auto text-github-text/20 mb-4" />
+              <h3 className="text-xl font-bold text-white mb-2">No commands found</h3>
+              <p className="text-github-text">Try searching for a different keyword or category.</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     if (activeTab === 'practice') {
       return (
         <div className="flex flex-col gap-8 animate-in slide-in-from-bottom-4 duration-500 pb-20">
@@ -189,7 +252,7 @@ function App() {
     <div className="min-h-screen bg-github-bg text-[#c9d1d9] font-sans flex flex-col selection:bg-github-accent/30 selection:text-white">
       <Header />
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         
         <main className="flex-1 overflow-y-auto w-full scrollbar-custom bg-[#0d1117]">
           <div className="max-w-5xl mx-auto p-6 md:p-12 lg:p-16">

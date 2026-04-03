@@ -87,7 +87,7 @@ export const undoing = [
     name: 'git stash clear',
     role: 'Cleanup',
     explanation: 'Deletes all items in your stash stack.',
-    scenario: 'You haven''t cleaned your stash in a year and want to wipe it completely.'
+    scenario: 'You haven\'t cleaned your stash in a year and want to wipe it completely.'
   },
   {
     name: 'git reflog expire',

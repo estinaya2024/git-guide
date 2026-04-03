@@ -69,13 +69,13 @@ export const remotes = [
     name: 'git clone --depth',
     role: 'Setup',
     explanation: 'Creates a shallow clone with a limited history depth.',
-    scenario: 'You only need the latest code from a huge repository (like Chromium) and don''t want to download gigabytes of history.'
+    scenario: 'You only need the latest code from a huge repository (like Chromium) and don\'t want to download gigabytes of history.'
   },
   {
     name: 'git clone --branch',
     role: 'Setup',
     explanation: 'Clones a specific branch instead of the default branch.',
-    scenario: 'You only want the code from the "beta" branch and don''t care about "main".'
+    scenario: 'You only want the code from the "beta" branch and don\'t care about "main".'
   },
   {
     name: 'git clone --mirror',

@@ -3,7 +3,7 @@ export const branching = [
     name: 'git branch -a',
     role: 'Branching',
     explanation: 'Lists all local and remote-tracking branches.',
-    scenario: 'You want to see all branches available in the repository, including those on GitHub that you haven''t checked out yet.'
+    scenario: 'You want to see all branches available in the repository, including those on GitHub that you haven\'t checked out yet.'
   },
   {
     name: 'git branch -v',

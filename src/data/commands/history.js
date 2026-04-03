@@ -39,7 +39,7 @@ export const history = [
     name: 'git name-rev',
     role: 'Naming',
     explanation: 'Finds symbolic names (like branch/tag names) for a given commit hash.',
-    scenario: 'You have a commit ID but don''t know which branch it came from.'
+    scenario: 'You have a commit ID but don\'t know which branch it came from.'
   },
   {
     name: 'git count-objects',
@@ -87,7 +87,7 @@ export const history = [
     name: 'git rev-parse',
     role: 'Utility',
     explanation: 'A plumbing command that parses parameters and converts them to commit hashes or absolute paths.',
-    scenario: 'You need to find the absolute path to your repository''s root directory in a bash script.'
+    scenario: 'You need to find the absolute path to your repository\'s root directory in a bash script.'
   },
   {
     name: 'git cat-file',
