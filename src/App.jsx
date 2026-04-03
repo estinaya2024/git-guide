@@ -66,26 +66,40 @@ function App() {
             </p>
           </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {filteredCommands.map((cmd, i) => (
-              <div key={i} className="bg-github-canvas border border-github-border rounded-lg p-5 hover:border-github-accent/50 transition-all group shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <code className="text-github-accent font-mono font-bold text-sm bg-github-accent/10 px-2 py-1 rounded">
-                    {cmd.name}
-                  </code>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#21262d] text-github-text/60 border border-github-border uppercase tracking-tight">
+              <div key={i} className="bg-github-canvas border border-github-border rounded-lg p-6 hover:border-github-accent/50 transition-all group shadow-sm flex flex-col h-full">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <code className="text-github-accent font-mono font-bold text-base bg-github-accent/10 px-2.5 py-1 rounded border border-github-accent/20">
+                      {cmd.name}
+                    </code>
+                  </div>
+                  <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-[#21262d] text-github-text/60 border border-github-border uppercase tracking-widest leading-none">
                     {cmd.role}
                   </span>
                 </div>
-                <p className="text-sm text-[#e6edf3] mb-4 leading-relaxed font-medium">
+                <p className="text-sm text-[#e6edf3] mb-6 leading-relaxed font-medium">
                   {cmd.explanation}
                 </p>
-                <div className="bg-[#0d1117] border border-github-border/50 rounded-md p-3 relative overflow-hidden">
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-github-accent/30" />
-                  <div className="text-[10px] font-bold text-github-text/40 uppercase mb-1 flex items-center gap-1.5 leading-none">
-                    <Zap size={10} className="text-github-accent" /> Real-World Scenario
+                
+                {cmd.syntax && (
+                  <div className="mb-6 space-y-2">
+                    <div className="text-[10px] font-bold text-github-text/40 uppercase tracking-widest flex items-center gap-1.5 leading-none px-1">
+                      <TerminalSquare size={10} /> Professional Usage
+                    </div>
+                    <div className="bg-[#0d1117] border border-github-border/80 rounded px-3 py-2.5 font-mono text-[11px] text-github-accent flex items-center justify-between">
+                      <code>{cmd.syntax}</code>
+                    </div>
                   </div>
-                  <p className="text-[12px] text-github-text leading-snug italic">
+                )}
+
+                <div className="mt-auto bg-[#0d1117] border border-github-border/50 rounded-lg p-4 relative overflow-hidden group-hover:border-github-accent/20 transition-colors">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-github-accent/30" />
+                  <div className="text-[10px] font-bold text-github-text/40 uppercase mb-2 flex items-center gap-1.5 leading-none">
+                    <Zap size={11} className="text-github-accent" /> Use Case Scenario
+                  </div>
+                  <p className="text-[12px] text-github-text leading-relaxed italic">
                     "{cmd.scenario}"
                   </p>
                 </div>
