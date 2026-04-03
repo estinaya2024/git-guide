@@ -6,19 +6,32 @@ const INITIAL_MESSAGE = [
 ];
 
 export default function InteractiveTerminal() {
-  const [history, setHistory] = useState(INITIAL_MESSAGE);
-  const [input, setInput] = useState('');
-  const [repoState, setRepoState] = useState({
-    initialized: false,
-    staged: [],
-    committed: [],
-    branch: 'main',
-    branches: ['main'],
-    stash: [],
+  const [history, setHistory] = useState(() => {
+    const saved = localStorage.getItem('terminal_history');
+    return saved ? JSON.parse(saved) : INITIAL_MESSAGE;
   });
   
+  const [repoState, setRepoState] = useState(() => {
+    const saved = localStorage.getItem('terminal_repo_state');
+    return saved ? JSON.parse(saved) : {
+      initialized: false,
+      staged: [],
+      committed: [],
+      branch: 'main',
+      branches: ['main'],
+      stash: [],
+      vfs: { 'README.md': '# Git Mastery Project\nLearn Git effectively here.' }
+    };
+  });
+
+  const [input, setInput] = useState('');
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem('terminal_history', JSON.stringify(history));
+    localStorage.setItem('terminal_repo_state', JSON.stringify(repoState));
+  }, [history, repoState]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -33,8 +46,37 @@ export default function InteractiveTerminal() {
       
       const newHistory = [...history, { type: 'input', content: fullCommand, branch: repoState.branch }];
 
-      if (cmd === 'help') {
-        newHistory.push({ type: 'system', content: 'Available commands:\n  git init\n  git status\n  git add <file>\n  git commit -m "<msg>"\n  git branch [name]\n  git checkout <name>\n  git stash [pop/list]\n  clear\n  help' });
+      // Shell Commands
+      if (cmd === 'ls') {
+        const files = Object.keys(repoState.vfs);
+        newHistory.push({ type: 'output', content: files.length > 0 ? files.join('  ') : 'No files in directory' });
+      } else if (cmd === 'touch') {
+        const fileName = args[0];
+        if (!fileName) {
+          newHistory.push({ type: 'error', content: 'usage: touch <filename>' });
+        } else {
+          setRepoState(prev => ({ ...prev, vfs: { ...prev.vfs, [fileName]: '' } }));
+          newHistory.push({ type: 'output', content: '' });
+        }
+      } else if (cmd === 'rm') {
+        const fileName = args[0];
+        if (repoState.vfs[fileName] !== undefined) {
+          const newVfs = { ...repoState.vfs };
+          delete newVfs[fileName];
+          setRepoState(prev => ({ ...prev, vfs: newVfs }));
+          newHistory.push({ type: 'output', content: `Removed ${fileName}` });
+        } else {
+          newHistory.push({ type: 'error', content: `rm: ${fileName}: No such file or directory` });
+        }
+      } else if (cmd === 'cat') {
+        const fileName = args[0];
+        if (repoState.vfs[fileName] !== undefined) {
+          newHistory.push({ type: 'output', content: repoState.vfs[fileName] || '(empty file)' });
+        } else {
+          newHistory.push({ type: 'error', content: `cat: ${fileName}: No such file or directory` });
+        }
+      } else if (cmd === 'help') {
+        newHistory.push({ type: 'system', content: 'Shell Commands:\n  ls, touch, rm, cat, clear\n\nGit Commands:\n  git init, status, add, commit, branch, checkout, switch, stash' });
       } else if (cmd === 'clear') {
         setHistory([]);
         setInput('');
@@ -48,48 +90,79 @@ export default function InteractiveTerminal() {
         } else {
           switch (subCmd) {
             case 'status':
-              if (repoState.staged.length === 0 && repoState.committed.length === 0) {
-                newHistory.push({ type: 'output', content: `On branch ${repoState.branch}\n\nNo commits yet\n\nnothing to commit (create/copy files and use "git add" to track)` });
-              } else if (repoState.staged.length > 0) {
-                 newHistory.push({ type: 'output', content: `On branch ${repoState.branch}\n\nChanges to be committed:\n  (use "git rm --cached <file>..." to unstage)\n\tnew file:   ${repoState.staged.join('\n\tnew file:   ')}` });
+              const untracked = Object.keys(repoState.vfs).filter(f => !repoState.staged.includes(f) && !repoState.committed.some(c => c.files.includes(f)));
+              let output = `On branch ${repoState.branch}\n`;
+              if (repoState.staged.length > 0) {
+                output += `\nChanges to be committed:\n\tnew file:   ${repoState.staged.join('\n\tnew file:   ')}`;
+              }
+              if (untracked.length > 0) {
+                output += `\n\nUntracked files:\n  (use "git add <file>..." to include in what will be committed)\n\t${untracked.join('\n\t')}`;
+              }
+              if (repoState.staged.length === 0 && untracked.length === 0) {
+                output += `\nnothing to commit, working tree clean`;
+              }
+              newHistory.push({ type: 'output', content: output });
+              break;
+
+            case 'add':
+              const file = args[0];
+              if (!file) {
+                 newHistory.push({ type: 'error', content: 'Nothing specified, nothing added.' });
+              } else if (file === '.') {
+                 setRepoState(prev => ({ ...prev, staged: [...new Set([...prev.staged, ...Object.keys(prev.vfs)])] }));
+                 newHistory.push({ type: 'output', content: 'Added all files to staging area.' });
+              } else if (repoState.vfs[file] !== undefined) {
+                 setRepoState(prev => ({ ...prev, staged: [...new Set([...prev.staged, file])] }));
+                 newHistory.push({ type: 'output', content: `Added ${file} to staging area.` });
               } else {
-                newHistory.push({ type: 'output', content: `On branch ${repoState.branch}\n\nnothing to commit, working tree clean` });
+                 newHistory.push({ type: 'error', content: `fatal: pathspec '${file}' did not match any files` });
               }
               break;
-            case 'add':
-              const file = args[0] || '.';
-              setRepoState(prev => ({ ...prev, staged: [...prev.staged, file === '.' ? 'index.html' : file] }));
-              newHistory.push({ type: 'output', content: file === '.' ? 'Added all files to staging area.' : `Added ${file} to staging area.` });
-              break;
+
             case 'commit':
-              if (repoState.staged.length === 0) {
+              const msg = fullCommand.match(/"([^"]+)"/)?.[1];
+              if (!msg) {
+                newHistory.push({ type: 'error', content: 'error: switch `m\' requires a value\n\nusage: git commit -m <message>' });
+              } else if (repoState.staged.length === 0) {
                 newHistory.push({ type: 'output', content: 'nothing to commit, working tree clean' });
               } else {
-                const msg = fullCommand.match(/"([^"]+)"/)?.[1] || 'no message';
                 setRepoState(prev => ({ 
                    ...prev, 
-                   committed: [...prev.committed, { msg, files: prev.staged }],
+                   committed: [...prev.committed, { id: Math.random().toString(16).slice(2, 8), msg, files: prev.staged }],
                    staged: [] 
                 }));
-                newHistory.push({ type: 'output', content: `[${repoState.branch} (root-commit)] ${msg}\n ${repoState.staged.length} file changed, 1 insertion(+)` });
+                newHistory.push({ type: 'output', content: `[${repoState.branch}] ${msg}\n ${repoState.staged.length} file changed` });
               }
               break;
+
+            case 'log':
+               if (repoState.committed.length === 0) {
+                 newHistory.push({ type: 'error', content: `fatal: your current branch '${repoState.branch}' does not have any commits yet` });
+               } else {
+                 const logContent = repoState.committed.slice().reverse().map(c => 
+                   `commit ${c.id}\nAuthor: Dev <dev@mastery.com>\nDate:   ${new Date().toLocaleString()}\n\n    ${c.msg}`
+                 ).join('\n\n');
+                 newHistory.push({ type: 'output', content: logContent });
+               }
+               break;
+
             case 'branch':
               const branchName = args[0];
               if (!branchName) {
                 newHistory.push({ type: 'output', content: repoState.branches.map(b => (b === repoState.branch ? `* ${b}` : `  ${b}`)).join('\n') });
               } else {
-                setRepoState(prev => ({ ...prev, branches: [...prev.branches, branchName] }));
+                setRepoState(prev => ({ ...prev, branches: [...new Set([...prev.branches, branchName])] }));
                 newHistory.push({ type: 'output', content: `Created branch '${branchName}'` });
               }
               break;
+
             case 'checkout':
             case 'switch':
               const target = args[subCmd === 'switch' && args[0] === '-c' ? 1 : 0];
               const isCreate = subCmd === 'switch' && args[0] === '-c';
               
               if (isCreate) {
-                setRepoState(prev => ({ ...prev, branches: [...prev.branches, target], branch: target }));
+                setRepoState(prev => ({ ...prev, branches: [...new Set([...prev.branches, target])], branch: target }));
                 newHistory.push({ type: 'output', content: `Switched to a new branch '${target}'` });
               } else if (repoState.branches.includes(target)) {
                 setRepoState(prev => ({ ...prev, branch: target }));
@@ -98,34 +171,7 @@ export default function InteractiveTerminal() {
                 newHistory.push({ type: 'error', content: `error: pathspec '${target}' did not match any file(s) known to git` });
               }
               break;
-            case 'stash':
-              if (args[0] === 'pop') {
-                if (repoState.stash.length === 0) {
-                  newHistory.push({ type: 'error', content: 'No stash entries found.' });
-                } else {
-                  const popped = repoState.stash[repoState.stash.length - 1];
-                  setRepoState(prev => ({ 
-                    ...prev, 
-                    staged: [...prev.staged, ...popped],
-                    stash: prev.stash.slice(0, -1) 
-                  }));
-                  newHistory.push({ type: 'output', content: 'Dropped refs/stash@{0} (applied stashed changes to working tree)' });
-                }
-              } else if (args[0] === 'list') {
-                newHistory.push({ type: 'output', content: repoState.stash.map((s, i) => `stash@{${i}}: WIP on ${repoState.branch}: temporary stash`).join('\n') || 'No stashes yet' });
-              } else {
-                if (repoState.staged.length === 0) {
-                  newHistory.push({ type: 'output', content: 'No local changes to save' });
-                } else {
-                  setRepoState(prev => ({ 
-                    ...prev, 
-                    stash: [...prev.stash, prev.staged],
-                    staged: [] 
-                  }));
-                  newHistory.push({ type: 'output', content: `Saved working directory and index state WIP on ${repoState.branch}` });
-                }
-              }
-              break;
+
             default:
               newHistory.push({ type: 'error', content: `git: '${subCmd}' is not a git command. See 'git --help'.` });
           }
@@ -138,6 +184,7 @@ export default function InteractiveTerminal() {
       setInput('');
     }
   };
+
 
   return (
     <div 
